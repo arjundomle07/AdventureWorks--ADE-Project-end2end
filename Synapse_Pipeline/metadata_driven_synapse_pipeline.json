@@ -1,0 +1,54 @@
+{
+    "name": "metadata_driven_synapse_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get_Metadata_Files",
+                "type": "GetMetadata",
+                "typeProperties": {
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "dataset": {
+                        "referenceName": "Gold_Binary_Dataset",
+                        "type": "DatasetReference"
+                    }
+                }
+            },
+            {
+                "name": "ForEach_File",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Get_Metadata_Files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": "@activity('Get_Metadata_Files').output.childItems",
+                    "activities": [
+                        {
+                            "name": "Execute_Stored_Procedure",
+                            "type": "SqlServerStoredProcedure",
+                            "typeProperties": {
+                                "storedProcedureName": "usp_CreateViewFromFile",
+                                "storedProcedureParameters": {
+                                    "FileName": {
+                                        "value": "@item().name",
+                                        "type": "String"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AzureSynapse_LinkedService",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

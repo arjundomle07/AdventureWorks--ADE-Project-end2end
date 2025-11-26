@@ -1,0 +1,73 @@
+# 📘 Project Walkthrough – Azure Data Engineering Pipeline
+
+This walkthrough explains the full execution of the Azure-based ETL pipeline project, from ingestion to visualization.
+
+---
+
+## 1️⃣ Ingestion (ADF + On-Prem SQL Server)
+
+- Restore **AdventureWorksLT2017** into SQL Server (on-prem)
+- Configure **Self-Hosted Integration Runtime** in Azure Data Factory
+- Create **Linked Services** to:
+  - SQL Server (source)
+  - Azure Data Lake Storage Gen2 (sink)
+- Build the **Ingestion Pipeline**:
+  - Use **Copy Data activity** for selected tables (`SalesLT.*`)
+  - Use **Lookup + ForEach + Copy Data** to automate multi-table ingestion
+  - Target the **Bronze Layer** in ADLS Gen2
+
+---
+
+## 2️⃣ Transformation (Azure Databricks)
+
+- Create a **cluster** (smallest node for cost control)
+- Mount ADLS Gen2 Bronze, Silver, and Gold layers using:
+  - Tenant ID
+  - Client ID
+  - Secret Key (via App Registration & Key Vault)
+- Use `bronze_to_silver.ipynb` and `silver_to_gold.ipynb`:
+  - Format `ModifiedDate` into `YYYY-MM-DD`
+  - Rename columns like `CustomerID` → `Customer_ID`
+
+---
+
+## 3️⃣ Orchestrating Databricks from ADF
+
+- Create a **Linked Service** to Databricks using Personal Access Token
+- Use **Notebook activity** in ADF pipelines to call:
+  - Bronze → Silver transformation
+  - Silver → Gold transformation
+- Chain both notebooks in the ADF pipeline with a **trigger**
+
+---
+
+## 4️⃣ Load (Azure Synapse Analytics)
+
+- Use **Serverless SQL Pool**
+- Create **views** for Gold-layer tables using `CREATE EXTERNAL TABLE` or `CREATE VIEW`
+- Implement a **Stored Procedure** to dynamically generate views
+- Build metadata-driven Synapse pipeline using:
+  - Binary dataset (to list files)
+  - ForEach activity (loop through file names)
+  - Execute Stored Procedure per table
+
+---
+
+## 5️⃣ Visualization (Power BI)
+
+- Connect Power BI Desktop to **Synapse Serverless SQL Pool**
+- Use **Import Mode** for performance
+- Load `db_gold` tables/views
+- Model relationships as needed
+- Create visualizations and publish dashboard
+
+---
+
+## ✅ End-to-End Testing
+
+- Insert new rows into SQL Server
+- Observe the entire pipeline:
+  - Triggered ingestion
+  - Databricks transformation
+  - View updates in Synapse
+  - Dashboard auto-refreshes to reflect new data

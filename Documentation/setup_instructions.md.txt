@@ -1,0 +1,84 @@
+# 🛠️ Setup Instructions – Azure Data Engineering Project
+
+Follow these steps to set up the full Azure environment and connect all components.
+
+---
+
+## 📁 1. Local Environment
+
+- Install **SQL Server** & restore `AdventureWorksLT2017`
+- Create SQL login:
+  ```sql
+  CREATE LOGIN testuser WITH PASSWORD = 'your_password';
+  CREATE USER testuser FOR LOGIN testuser;
+  ALTER ROLE db_owner ADD MEMBER testuser;
+☁️ 2. Azure Resources
+Create the following in the same resource group:
+
+ Azure Data Lake Storage Gen2
+
+Containers: bronze, silver, gold
+
+✅ Azure Data Factory
+
+Set up Self-Hosted IR
+
+✅ Azure Databricks
+
+Create a cluster
+
+Generate Personal Access Token
+
+✅ Azure Key Vault
+
+Store SQL credentials and App secrets
+
+✅ Azure Synapse Analytics
+
+Use Serverless SQL Pool
+
+🔐 3. Key Vault Setup
+Store SQL user and password in secrets
+
+Assign Key Vault access policy to ADF
+
+Store App Registration secret used for mounting ADLS in Databricks
+
+🧪 4. Databricks Mounting Script
+Register an Azure AD App
+
+Get:
+
+Tenant ID
+
+Client ID
+
+Secret Key
+
+Grant access to ADLS Gen2 via IAM roles
+
+Use mount command in notebook:
+
+configs = {
+  "fs.azure.account.auth.type": "OAuth",
+  "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+  "fs.azure.account.oauth2.client.id": "<client-id>",
+  "fs.azure.account.oauth2.client.secret": "<secret>",
+  "fs.azure.account.oauth2.client.endpoint": "https://login.microsoftonline.com/<tenant-id>/oauth2/token",
+}
+dbutils.fs.mount(
+  source = "abfss://bronze@<storage-account-name>.dfs.core.windows.net/",
+  mount_point = "/mnt/bronze",
+  extra_configs = configs)
+
+
+🔗 5. Linked Services Summary
+
+| Component         | Linked To                     |
+| ----------------- | ----------------------------- |
+| ADF to SQL        | On-Prem (via Self-Hosted IR)  |
+| ADF to Key Vault  | Secret retrieval              |
+| ADF to ADLS       | Storage for bronze layer      |
+| ADF to Databricks | Notebook trigger (with token) |
+| ADF to Synapse    | Load Gold data                |
+| Power BI          | Connects to Synapse views     |

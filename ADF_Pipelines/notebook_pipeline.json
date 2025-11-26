@@ -1,0 +1,39 @@
+{
+    "name": "notebook_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Run_Bronze_to_Silver_Notebook",
+                "type": "DatabricksNotebook",
+                "typeProperties": {
+                    "notebookPath": "/Shared/bronze_to_silver",
+                    "baseParameters": {}
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricks_LinkedService",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Run_Silver_to_Gold_Notebook",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Run_Bronze_to_Silver_Notebook",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "notebookPath": "/Shared/silver_to_gold",
+                    "baseParameters": {}
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricks_LinkedService",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ]
+    }
+}

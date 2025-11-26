@@ -1,0 +1,69 @@
+{
+    "name": "multi_table_ingestion_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup_Table_List",
+                "type": "Lookup",
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource",
+                        "sqlReaderQuery": "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'SalesLT'"
+                    },
+                    "dataset": {
+                        "referenceName": "SQL_Generic",
+                        "type": "DatasetReference"
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach_Table",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup_Table_List",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": "@activity('Lookup_Table_List').output.value",
+                    "activities": [
+                        {
+                            "name": "Copy_Each_Table",
+                            "type": "Copy",
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlSource"
+                                },
+                                "sink": {
+                                    "type": "DelimitedTextSink"
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "SQL_Generic",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "TableName": "@item().TABLE_NAME"
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "ADLS_Generic",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "FileName": "@item().TABLE_NAME"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

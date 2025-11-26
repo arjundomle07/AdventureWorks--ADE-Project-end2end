@@ -1,0 +1,31 @@
+{
+    "name": "ingestion_pipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "Copy_SalesLT_Address",
+                "type": "Copy",
+                "inputs": [
+                    {
+                        "referenceName": "SQL_SalesLT_Address",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "ADLS_Bronze_Address",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource"
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink"
+                    }
+                }
+            }
+        ]
+    }
+}
